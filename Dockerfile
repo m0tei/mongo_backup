@@ -2,7 +2,7 @@
 FROM mongo:latest
 
 # Install cron and required utilities
-RUN apt-get update && apt-get -y install cron && apt-get install curl -y  && apt-get install vim -y
+RUN apt-get update && apt-get -y install cron && apt-get install curl -y  && apt-get install vim -y && apt-get install -y gettext-base
 
 ##############################################################################################
 
@@ -27,9 +27,11 @@ RUN mkdir -p /backup
 
 # Copy the script that performs mongodump into the container
 COPY mongodump_script.sh /mongodump_script.sh
+COPY replace.sh /replace.sh
 
 # Give execute permission to the script
 RUN chmod +x /mongodump_script.sh
+RUN chmod +x /replace.sh
 
 # Create a cron job for mongodump
 RUN echo "0 0 * * * /bin/bash /mongodump_script.sh >> /var/log/cron.log 2>&1" > /etc/cron.d/mongodump-cron
@@ -41,4 +43,4 @@ RUN touch /var/log/cron.log
 RUN crontab /etc/cron.d/mongodump-cron
 
 # Run the cron job in the foreground
-CMD cron && tail -f /var/log/cron.log
+CMD /replace.sh && cron && tail -f /var/log/cron.log
